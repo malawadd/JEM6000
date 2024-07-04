@@ -18,10 +18,11 @@ console.log('Server starting up...');
 const clients = new Set();
 const methodCache = new Map();
 
-// For TPM calculation
 const transactionHistory = [];
-const HISTORY_WINDOW = 5 * 60 * 1000; // 5 minutes in milliseconds
-const excludeAddress = '0xDeaDDEaDDeAdDeAdDEAdDEaddeAddEAdDEAd0001'.toLowerCase();
+const tpmHistory = [];
+const HISTORY_WINDOW = 60 * 60 * 1000; // 1 hour in milliseconds
+const EXCLUDE_ADDRESS = '0xDeaDDEaDDeAdDeAdDEAdDEaddeAddEAdDEAd0001'.toLowerCase();
+const MINUTE_WINDOW = 60 * 1000; // 1 minute in milliseconds
 
 wss.on('connection', (ws) => {
   console.log('New WebSocket client connected');
@@ -82,9 +83,10 @@ async function getMethodName(selector) {
 
 function addTransaction(timestamp) {
   transactionHistory.push(timestamp);
+  const now = Date.now();
   
   // Remove transactions older than HISTORY_WINDOW
-  const cutoff = Date.now() - HISTORY_WINDOW;
+  const cutoff = now - HISTORY_WINDOW;
   while (transactionHistory.length > 0 && transactionHistory[0] < cutoff) {
     transactionHistory.shift();
   }
@@ -92,9 +94,39 @@ function addTransaction(timestamp) {
 
 function calculateTPM() {
   const now = Date.now();
-  const cutoff = now - 60000; // 1 minute ago
+  const cutoff = now - MINUTE_WINDOW; // 1 minute ago
   const recentTransactions = transactionHistory.filter(t => t >= cutoff);
   return recentTransactions.length;
+}
+
+function updateTPMHistory() {
+  const tpm = calculateTPM();
+  const now = Date.now();
+  tpmHistory.push({ tpm, timestamp: now });
+
+  // Remove old records
+  const cutoff = now - HISTORY_WINDOW;
+  while (tpmHistory.length > 0 && tpmHistory[0].timestamp < cutoff) {
+    tpmHistory.shift();
+  }
+}
+
+function calculateStatistics() {
+  const now = Date.now();
+  const cutoff = now - 60 * 60 * 1000; // 1 hour ago
+  const recentTPM = tpmHistory.filter(record => record.timestamp >= cutoff);
+
+  const high = Math.max(...recentTPM.map(record => record.tpm));
+  const low = Math.min(...recentTPM.map(record => record.tpm));
+  const current = calculateTPM();
+  const changeLastHourPct = recentTPM.length > 0 ? (current - recentTPM[0].tpm) / recentTPM[0].tpm : 0;
+
+  return {
+    high,
+    low,
+    current,
+    change_last_hour_pct: changeLastHourPct
+  };
 }
 
 async function listenForTransactions() {
@@ -110,8 +142,9 @@ async function listenForTransactions() {
         console.log(`Processing transaction hash: ${txHash}`);
         try {
           const tx = await retry(() => provider.getTransaction(txHash));
-          if (tx && tx.from && tx.from.toLowerCase() !== excludeAddress) {
+          if (tx && tx.from && tx.from.toLowerCase() !== EXCLUDE_ADDRESS) {
             addTransaction(Date.now());
+            updateTPMHistory();
             
             const methodSelector = decodeMethod(tx.data);
             const methodName = await getMethodName(methodSelector);
@@ -150,10 +183,9 @@ async function listenForTransactions() {
   console.log('Transaction listener set up successfully');
 }
 
-// API endpoint for TPM
 app.get('/api/tpm', (req, res) => {
-  const tpm = calculateTPM();
-  res.json({ tpm });
+  const stats = calculateStatistics();
+  res.json(stats);
 });
 
 listenForTransactions();
