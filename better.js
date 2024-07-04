@@ -18,6 +18,11 @@ console.log('Server starting up...');
 const clients = new Set();
 const methodCache = new Map();
 
+// For TPM calculation
+const transactionHistory = [];
+const HISTORY_WINDOW = 5 * 60 * 1000; // 5 minutes in milliseconds
+const excludeAddress = '0xDeaDDEaDDeAdDeAdDEAdDEaddeAddEAdDEAd0001'.toLowerCase();
+
 wss.on('connection', (ws) => {
   console.log('New WebSocket client connected');
   clients.add(ws);
@@ -75,10 +80,25 @@ async function getMethodName(selector) {
   return selector;
 }
 
+function addTransaction(timestamp) {
+  transactionHistory.push(timestamp);
+  
+  // Remove transactions older than HISTORY_WINDOW
+  const cutoff = Date.now() - HISTORY_WINDOW;
+  while (transactionHistory.length > 0 && transactionHistory[0] < cutoff) {
+    transactionHistory.shift();
+  }
+}
+
+function calculateTPM() {
+  const now = Date.now();
+  const cutoff = now - 60000; // 1 minute ago
+  const recentTransactions = transactionHistory.filter(t => t >= cutoff);
+  return recentTransactions.length;
+}
+
 async function listenForTransactions() {
   console.log('Starting to listen for new transactions...');
-  
-  const excludeAddress = '0xDeaDDEaDDeAdDeAdDEAdDEaddeAddEAdDEAd0001'.toLowerCase();
 
   provider.on('block', async (blockNumber) => {
     console.log(`New block detected: ${blockNumber}`);
@@ -91,13 +111,13 @@ async function listenForTransactions() {
         try {
           const tx = await retry(() => provider.getTransaction(txHash));
           if (tx && tx.from && tx.from.toLowerCase() !== excludeAddress) {
+            addTransaction(Date.now());
+            
             const methodSelector = decodeMethod(tx.data);
             const methodName = await getMethodName(methodSelector);
             
-            // Fetch transaction receipt to get event count
             const receipt = await retry(() => provider.getTransactionReceipt(txHash));
             const eventCount = receipt ? receipt.logs.length : 0;
-            console.log(`eventCount: ${eventCount}`);
 
             const transactionDetails = {
               hash: tx.hash,
@@ -110,7 +130,7 @@ async function listenForTransactions() {
               nonce: tx.nonce,
               gasPrice: tx.gasPrice ? ethers.formatUnits(tx.gasPrice, 'gwei') : '0',
               method: methodName,
-              eventCount: eventCount 
+              eventCount: eventCount
             };
             
             console.log(`Transaction details prepared: ${JSON.stringify(transactionDetails)}`);
@@ -129,6 +149,12 @@ async function listenForTransactions() {
 
   console.log('Transaction listener set up successfully');
 }
+
+// API endpoint for TPM
+app.get('/api/tpm', (req, res) => {
+  const tpm = calculateTPM();
+  res.json({ tpm });
+});
 
 listenForTransactions();
 
