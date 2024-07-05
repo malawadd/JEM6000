@@ -1,11 +1,10 @@
 # JEM 6000: A Dynamic 3D Visualization of Fraxtal Network Transactions
 
-### Introduction
 
+### Introduction
 Meet the JEM 6000, a cutting-edge dashboard designed to provide real-time visualization of Fraxtal Network blockchain transactions. Using a custom-built API, this project renders data onto a 3D globe, offering an immersive and interactive way to monitor blockchain activity.
 
 ### Features
-
 **Real-Time Transaction Visualization:**
 Monitor Fraxtal Network transactions in real-time, displayed dynamically on a 3D globe.
 
@@ -13,7 +12,6 @@ Monitor Fraxtal Network transactions in real-time, displayed dynamically on a 3D
 Explore blockchain activity with a visually engaging and interactive 3D globe interface.
 
 ### How It Works
-
 JEM-6000 transforms complex blockchain data into an accessible and interactive experience through an innovative combination of technologies:
 
 **Real-Time Data Fetching:**
@@ -59,12 +57,17 @@ To maintain data integrity and consistency, uuid is used to generate unique iden
 Through this sophisticated blend of technologies, JEM-6000 offers users an engaging and informative way to monitor blockchain activities, making complex data comprehensible and visually compelling.
 
 ### How To Use
+**Backend:**
+1. Navigate to the `backend` directory.
+2. Run `npm install` to install the required packages.
+3. Run `npm run start` to start the backend server.
 
-1. Run `npm install` to install the required packages.
-2. Run `npm run dev` to start the client application.
+**Client:**
+1. Navigate to the `client` directory.
+2. Run `npm install` to install the required packages.
+3. Run `npm run dev` to start the client application.
 
 ### Technology Used
-
 - **Vue 3:** A progressive JavaScript framework for building user interfaces.
 - **Pinia:** A store for Vue applications, designed with the Composition API in mind.
 - **Three.js:** JavaScript library for creating 3D graphics.
@@ -76,7 +79,6 @@ Through this sophisticated blend of technologies, JEM-6000 offers users an engag
 - **Vue Router:** Official router for Vue.js.
 
 ### Credits
-
 - **Three.js and three-globe:** For the 3D visualization tools.
 - **D3.js:** For the data visualization capabilities.
 - **Vue 3 and Pinia:** For the framework and state management.
