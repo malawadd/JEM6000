@@ -122,7 +122,7 @@ watch(
 									:fill="appStore.network === 'mainnet' ? '#4CDC89' : 'var(--orange)'" />
 							</svg>
 							<Text size="14" weight="600" color="primary" style="text-transform: capitalize">
-								Celestia {{ appStore.network }}
+								Frax {{ appStore.network }}
 							</Text>
 						</Flex>
 
@@ -136,12 +136,7 @@ watch(
 									color="secondary" /> Mainnet
 							</Flex>
 						</DropdownItem>
-						<DropdownItem @click="appStore.network = 'mocha'">
-							<Flex align="center" gap="8">
-								<Icon :name="appStore.network === 'mocha' ? 'check' : ''" size="14" color="secondary" />
-								Mocha
-							</Flex>
-						</DropdownItem>
+
 					</template>
 				</Dropdown>
 			</Flex>
