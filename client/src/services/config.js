@@ -2,11 +2,11 @@ import { useAppStore } from "@/stores/app"
 
 export const endpoints = {
 	api: {
-		mainnet: "http://avq4fl61598crd1l0vpec3dd3s.ingress.us-west.spheron.wiki",
+		mainnet: "http://localhost:5000",
 	
 	},
 	wss: {
-		mainnet: "ws://avq4fl61598crd1l0vpec3dd3s.ingress.us-west.spheron.wiki",
+		mainnet: "ws://localhost:5000",
 		
 	},
 }
